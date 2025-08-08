@@ -1,0 +1,12 @@
+{
+  "created_at": "2025-08-08T18:17:23.56379+07:00",
+  "encryption": "aes256gcm",
+  "local_ip": "198.19.249.30",
+  "local_subnet": "10.0.1.0/24",
+  "name": "test-tunnel",
+  "post_quantum": false,
+  "remote_ip": "198.19.249.197",
+  "remote_subnet": "10.0.2.0/24",
+  "status": "UP",
+  "updated_at": "2025-08-08T18:17:23.56379+07:00"
+}
