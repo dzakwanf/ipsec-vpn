@@ -26,26 +26,28 @@ const (
 
 // Config represents the configuration for an IPsec tunnel
 type Config struct {
-	Name         string
-	LocalIP      string
-	RemoteIP     string
-	LocalSubnet  string
-	RemoteSubnet string
-	Encryption   string
-	PostQuantum  bool
+Name         string
+LocalIP      string
+RemoteIP     string
+LocalSubnet  string
+RemoteSubnet string
+Encryption   string
+PostQuantum  bool
+}
 
 // Tunnel represents an IPsec tunnel
 type Tunnel struct {
-	Name         string    `json:"name"`
-	LocalIP      string    `json:"local_ip"`
-	RemoteIP     string    `json:"remote_ip"`
-	LocalSubnet  string    `json:"local_subnet"`
-	RemoteSubnet string    `json:"remote_subnet"`
-	Encryption   string    `json:"encryption"`
-	PostQuantum  bool      `json:"post_quantum"`
-	Status       Status    `json:"status"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+Name         string    `json:"name"`
+LocalIP      string    `json:"local_ip"`
+RemoteIP     string    `json:"remote_ip"`
+LocalSubnet  string    `json:"local_subnet"`
+RemoteSubnet string    `json:"remote_subnet"`
+Encryption   string    `json:"encryption"`
+PostQuantum  bool      `json:"post_quantum"`
+Status       Status    `json:"status"`
+CreatedAt    time.Time `json:"created_at"`
+UpdatedAt    time.Time `json:"updated_at"`
+}
 
 // Create creates a new IPsec tunnel with the given configuration
 func Create(config Config) (*Tunnel, error) {
