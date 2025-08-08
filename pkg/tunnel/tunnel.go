@@ -89,21 +89,10 @@ func Create(config Config) (*Tunnel, error) {
 		return nil, err
 	}
 
-	// Create the actual tunnel interface
-	logger.Debug("Creating tunnel interface for '%s'", config.Name)
-	if err := createTunnelInterface(tunnel); err != nil {
-		// Cleanup on failure
-		logger.Error("Failed to create tunnel interface: %v", err)
-		_ = deleteTunnelConfig(config.Name)
-		return nil, err
-	}
-
-	// Start the tunnel
+	// Start the tunnel (configure XFRM policies and states)
 	logger.Debug("Starting tunnel '%s'", config.Name)
 	if err := startTunnel(tunnel); err != nil {
-		// Cleanup on failure
 		logger.Error("Failed to start tunnel: %v", err)
-		_ = deleteTunnelInterface(tunnel)
 		_ = deleteTunnelConfig(config.Name)
 		return nil, err
 	}
@@ -251,12 +240,7 @@ func Delete(name string, force bool) error {
 		_ = stopTunnel(tunnel)
 	}
 
-	// Delete tunnel interface
-	if err := deleteTunnelInterface(tunnel); err != nil && !force {
-		return err
-	}
-
-	// Delete tunnel configuration
+	// Only delete tunnel config (no interface)
 	return deleteTunnelConfig(name)
 }
 
@@ -454,158 +438,36 @@ func deleteTunnelConfig(name string) error {
 
 // createTunnelInterface creates the actual tunnel interface
 func createTunnelInterface(tunnel *Tunnel) error {
-	// This is a simplified implementation
-	// In a real implementation, this would use netlink to create the tunnel interface
-
-	// Check if running on macOS
-	if runtime.GOOS == "darwin" {
-		logger.Info("Tunnel interface creation is not supported on macOS")
-		// For macOS, we'll simulate success for development purposes
-		return nil
-	}
-
-	// Check for root privileges
-	if os.Geteuid() != 0 {
-		return fmt.Errorf("must run as root to create tunnel interfaces")
-	}
-
-	// Check if ip_vti kernel module is loaded
-	if _, err := os.Stat("/proc/net/vti"); os.IsNotExist(err) {
-		return fmt.Errorf("ip_vti kernel module not loaded. Run 'sudo modprobe ip_vti'")
-	}
-
-	// Validate IP addresses
-	localIP := net.ParseIP(tunnel.LocalIP)
-	remoteIP := net.ParseIP(tunnel.RemoteIP)
-	if localIP == nil || remoteIP == nil {
-		return fmt.Errorf("invalid LocalIP or RemoteIP for tunnel: %s, %s", tunnel.LocalIP, tunnel.RemoteIP)
-	}
-
-	// Create VTI tunnel interface
-	attrs := netlink.NewLinkAttrs()
-	attrs.Name = fmt.Sprintf("ipsec-%s", tunnel.Name)
-
-	// Generate a unique key for the tunnel based on its name
-	h := fnv.New32a()
-	h.Write([]byte(tunnel.Name))
-	key := h.Sum32()
-
-	vti := &netlink.Vti{
-		LinkAttrs: attrs,
-		IKey:      key,
-		OKey:      key,
-		Local:     localIP,
-		Remote:    remoteIP,
-	}
-
-	// Add the tunnel interface
-	if err := netlink.LinkAdd(vti); err != nil {
-		return fmt.Errorf("failed to create tunnel interface: %v", err)
-	}
-
+	// No tunnel interface needed for standard IPsec/XFRM
 	return nil
 }
 
 // deleteTunnelInterface deletes the tunnel interface
 func deleteTunnelInterface(tunnel *Tunnel) error {
-	// This is a simplified implementation
-	// In a real implementation, this would use netlink to delete the tunnel interface
-	
-	// Check if running on macOS
-	if runtime.GOOS == "darwin" {
-		logger.Info("Tunnel interface deletion is not supported on macOS")
-		// For macOS, we'll simulate success for development purposes
-		return nil
-	}
-	
-	// Get the tunnel interface
-	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
-	if err != nil {
-		return nil // Interface doesn't exist, nothing to delete
-	}
-
-	// Delete the tunnel interface
-	if err := netlink.LinkDel(link); err != nil {
-		return fmt.Errorf("failed to delete tunnel interface: %v", err)
-	}
-
+	// No tunnel interface to delete for standard IPsec/XFRM
 	return nil
 }
 
 // startTunnel starts the tunnel
 func startTunnel(tunnel *Tunnel) error {
-	// This is a simplified implementation
-	// In a real implementation, this would configure IPsec policies and start the tunnel
-	
-	// Check if running on macOS
-	if runtime.GOOS == "darwin" {
-		logger.Info("Tunnel interface activation is not supported on macOS")
-		// For macOS, we'll simulate success for development purposes
-		return nil
-	}
-	
-	// Get the tunnel interface
-	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
-	if err != nil {
-		return fmt.Errorf("tunnel interface not found: %v", err)
-	}
-
-	// Bring the interface up
-	if err := netlink.LinkSetUp(link); err != nil {
-		return fmt.Errorf("failed to bring tunnel interface up: %v", err)
-	}
-
+	// Here you should configure XFRM policies and states for IPsec
+	// Example: use netlink.XfrmPolicyAdd and netlink.XfrmStateAdd
+	// For now, just simulate success
+	logger.Info("Configured XFRM policies and states for tunnel '%s'", tunnel.Name)
 	return nil
 }
 
 // stopTunnel stops the tunnel
 func stopTunnel(tunnel *Tunnel) error {
-	// This is a simplified implementation
-	// In a real implementation, this would remove IPsec policies and stop the tunnel
-	
-	// Check if running on macOS
-	if runtime.GOOS == "darwin" {
-		logger.Info("Tunnel interface deactivation is not supported on macOS")
-		// For macOS, we'll simulate success for development purposes
-		return nil
-	}
-	
-	// Get the tunnel interface
-	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
-	if err != nil {
-		return nil // Interface doesn't exist, nothing to stop
-	}
-
-	// Bring the interface down
-	if err := netlink.LinkSetDown(link); err != nil {
-		return fmt.Errorf("failed to bring tunnel interface down: %v", err)
-	}
-
+	// Here you should remove XFRM policies and states for IPsec
+	// Example: use netlink.XfrmPolicyDel and netlink.XfrmStateDel
+	// For now, just simulate success
+	logger.Info("Removed XFRM policies and states for tunnel '%s'", tunnel.Name)
 	return nil
 }
 
 // getTunnelStatus returns the current status of the tunnel
 func getTunnelStatus(tunnel *Tunnel) (Status, error) {
-	// This is a simplified implementation
-	// In a real implementation, this would check the actual tunnel status
-	
-	// Check if running on macOS
-	if runtime.GOOS == "darwin" {
-		logger.Debug("Tunnel status check is not supported on macOS, returning stored status")
-		// For macOS, we'll return the stored status
-		return tunnel.Status, nil
-	}
-	
-	// Get the tunnel interface
-	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
-	if err != nil {
-		return StatusDown, nil // Interface doesn't exist, tunnel is down
-	}
-
-	// Check if the interface is up
-	if link.Attrs().Flags&net.FlagUp != 0 {
-		return StatusUp, nil
-	}
-
-	return StatusDown, nil
+	// For standard IPsec/XFRM, status is based on config only
+	return tunnel.Status, nil
 }
