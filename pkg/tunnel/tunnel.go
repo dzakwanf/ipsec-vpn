@@ -3,6 +3,7 @@ package tunnel
 import (
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
 	"os"
 	"path/filepath"
