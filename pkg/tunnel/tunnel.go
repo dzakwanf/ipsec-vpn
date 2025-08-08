@@ -246,6 +246,7 @@ func Delete(name string, force bool) error {
 	// Delete tunnel configuration
 	return deleteTunnelConfig(name)
 }
+}
 
 // createGRETunnelInterface creates a GRE tunnel interface
 func createGRETunnelInterface(tunnel *Tunnel) error {
