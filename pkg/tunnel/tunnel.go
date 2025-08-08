@@ -3,6 +3,7 @@ package tunnel
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
 	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/viper"
+	"github.com/vishvananda/netlink"
 )
 
 // Status represents the current state of a tunnel
@@ -85,10 +87,10 @@ func Create(config Config) (*Tunnel, error) {
 		return nil, err
 	}
 
-	// Start the tunnel (configure XFRM policies and states)
-	logger.Debug("Starting tunnel '%s'", config.Name)
-	if err := startTunnel(tunnel); err != nil {
-		logger.Error("Failed to start tunnel: %v", err)
+	// Create GRE tunnel interface
+	logger.Debug("Creating GRE tunnel interface for '%s'", config.Name)
+	if err := createGRETunnelInterface(tunnel); err != nil {
+		logger.Error("Failed to create GRE tunnel interface: %v", err)
 		_ = deleteTunnelConfig(config.Name)
 		return nil, err
 	}
@@ -236,8 +238,63 @@ func Delete(name string, force bool) error {
 		_ = stopTunnel(tunnel)
 	}
 
-	// Only delete tunnel config (no interface)
+	// Delete GRE tunnel interface
+	if err := deleteGRETunnelInterface(tunnel); err != nil && !force {
+		return err
+	}
+
+	// Delete tunnel configuration
 	return deleteTunnelConfig(name)
+// createGRETunnelInterface creates a GRE tunnel interface
+func createGRETunnelInterface(tunnel *Tunnel) error {
+	// Requires root privileges
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("must run as root to create GRE tunnel interfaces")
+	}
+
+	localIP := net.ParseIP(tunnel.LocalIP)
+	remoteIP := net.ParseIP(tunnel.RemoteIP)
+	if localIP == nil || remoteIP == nil {
+		return fmt.Errorf("invalid LocalIP or RemoteIP for tunnel: %s, %s", tunnel.LocalIP, tunnel.RemoteIP)
+	}
+
+	attrs := netlink.NewLinkAttrs()
+	attrs.Name = fmt.Sprintf("gre-%s", tunnel.Name)
+
+	gre := &netlink.Gretun{
+		LinkAttrs: attrs,
+		Local:     localIP,
+		Remote:    remoteIP,
+		IKey:      0,
+		OKey:      0,
+	}
+
+	if err := netlink.LinkAdd(gre); err != nil {
+		return fmt.Errorf("failed to create GRE tunnel interface: %v", err)
+	}
+
+	// Bring the interface up
+	if err := netlink.LinkSetUp(gre); err != nil {
+		return fmt.Errorf("failed to bring GRE tunnel interface up: %v", err)
+	}
+
+	return nil
+}
+
+// deleteGRETunnelInterface deletes a GRE tunnel interface
+func deleteGRETunnelInterface(tunnel *Tunnel) error {
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("must run as root to delete GRE tunnel interfaces")
+	}
+	link, err := netlink.LinkByName(fmt.Sprintf("gre-%s", tunnel.Name))
+	if err != nil {
+		return nil // Interface doesn't exist, nothing to delete
+	}
+	if err := netlink.LinkDel(link); err != nil {
+		return fmt.Errorf("failed to delete GRE tunnel interface: %v", err)
+	}
+	return nil
+}
 }
 
 // Helper functions
