@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -76,4 +77,15 @@ func initConfig() {
 	// Environment variables can override config file settings
 	viper.AutomaticEnv() // read in environment variables that match
 	viper.SetEnvPrefix("IPSEC") // will be uppercased automatically
+
+	// Initialize logger
+	if err := logger.Init(verbose); err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing logger: %v\n", err)
+	}
+
+	// Log startup information
+	logger.Info("IPsec VPN starting up")
+	if verbose {
+		logger.Debug("Verbose logging enabled")
+	}
 }

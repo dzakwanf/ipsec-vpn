@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,8 @@ var cryptoShowCmd = &cobra.Command{
 		showPostQuantum, _ := cmd.Flags().GetBool("post-quantum")
 		showClassic, _ := cmd.Flags().GetBool("classic")
 
+		logger.Debug("Showing cryptographic algorithms (classic: %t, post-quantum: %t)", showClassic, showPostQuantum)
+
 		// If neither flag is specified, show both
 		if !showPostQuantum && !showClassic {
 			showPostQuantum = true
@@ -28,6 +31,7 @@ var cryptoShowCmd = &cobra.Command{
 		}
 
 		if showClassic {
+			logger.Info("Displaying classic encryption algorithms")
 			fmt.Println("Classic encryption algorithms:")
 			for _, algo := range crypto.ListClassicAlgorithms() {
 				fmt.Printf("- %s: %s\n", algo.Name, algo.Description)
@@ -36,6 +40,7 @@ var cryptoShowCmd = &cobra.Command{
 		}
 
 		if showPostQuantum {
+			logger.Info("Displaying post-quantum encryption algorithms")
 			fmt.Println("Post-quantum encryption algorithms:")
 			for _, algo := range crypto.ListPostQuantumAlgorithms() {
 				fmt.Printf("- %s: %s\n", algo.Name, algo.Description)
@@ -55,12 +60,19 @@ var cryptoTestCmd = &cobra.Command{
 			data = "This is a test message for encryption"
 		}
 
+		logger.Info("Testing cryptographic algorithm '%s' with %d bytes of data", algorithm, len(data))
+
 		// Test the algorithm
 		result, err := crypto.TestAlgorithm(algorithm, []byte(data))
 		if err != nil {
+			logger.Error("Error testing algorithm '%s': %v", algorithm, err)
 			fmt.Printf("Error testing algorithm '%s': %v\n", algorithm, err)
 			return
 		}
+
+		logger.Info("Algorithm '%s' test completed successfully (decryption: %v)", algorithm, result.DecryptionSuccessful)
+		logger.Debug("Test performance - KeyGen: %v, Encrypt: %v, Decrypt: %v", 
+			result.KeyGenTime, result.EncryptTime, result.DecryptTime)
 
 		fmt.Printf("Algorithm: %s\n", algorithm)
 		fmt.Printf("Original data: %s\n", data)
@@ -81,12 +93,16 @@ var cryptoSetDefaultCmd = &cobra.Command{
 		algorithm := args[0]
 		postQuantum, _ := cmd.Flags().GetBool("post-quantum")
 
+		logger.Info("Setting default %s algorithm to '%s'", postQuantumLabel(postQuantum), algorithm)
+
 		err := crypto.SetDefaultAlgorithm(algorithm, postQuantum)
 		if err != nil {
+			logger.Error("Error setting default algorithm: %v", err)
 			fmt.Printf("Error setting default algorithm: %v\n", err)
 			return
 		}
 
+		logger.Info("Default %s algorithm successfully set to '%s'", postQuantumLabel(postQuantum), algorithm)
 		fmt.Printf("Default %s algorithm set to: %s\n", 
 			postQuantumLabel(postQuantum), algorithm)
 	},

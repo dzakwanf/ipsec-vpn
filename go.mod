@@ -10,6 +10,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/crypto v0.19.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (

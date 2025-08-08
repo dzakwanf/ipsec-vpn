@@ -48,6 +48,12 @@ network_advertisement:
       metric: 200
 
 # Logging configuration
+log:
+  directory: "/var/log/ipsec-vpn"
+  max_size: 10  # Maximum size in MB before rotation
+  max_backups: 5  # Number of rotated logs to keep
+  max_age: 30  # Maximum age in days to keep logs
+  compress: true  # Whether to compress rotated logs
 logging:
   level: info  # debug, info, warn, error
   file: "/var/log/ipsec-vpn.log"

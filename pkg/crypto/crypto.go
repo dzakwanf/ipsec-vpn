@@ -12,6 +12,7 @@ import (
 	"github.com/cloudflare/circl/kem"
 	"github.com/cloudflare/circl/kem/kyber/kyber768"
 	"github.com/cloudflare/circl/kem/kyber/kyber1024"
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/chacha20poly1305"
 )
@@ -35,6 +36,7 @@ type TestResult struct {
 
 // ListClassicAlgorithms returns a list of available classic encryption algorithms
 func ListClassicAlgorithms() []Algorithm {
+	logger.Debug("Listing available classic encryption algorithms")
 	return []Algorithm{
 		{
 			Name:        "aes256gcm",
@@ -51,6 +53,7 @@ func ListClassicAlgorithms() []Algorithm {
 
 // ListPostQuantumAlgorithms returns a list of available post-quantum encryption algorithms
 func ListPostQuantumAlgorithms() []Algorithm {
+	logger.Debug("Listing available post-quantum encryption algorithms")
 	return []Algorithm{
 		{
 			Name:        "kyber768",
@@ -72,6 +75,7 @@ func ListPostQuantumAlgorithms() []Algorithm {
 
 // TestAlgorithm tests an encryption algorithm with the given data
 func TestAlgorithm(algorithm string, data []byte) (*TestResult, error) {
+	logger.Info("Testing encryption algorithm: %s", algorithm)
 	result := &TestResult{
 		Algorithm: algorithm,
 	}
@@ -79,22 +83,29 @@ func TestAlgorithm(algorithm string, data []byte) (*TestResult, error) {
 	// Test the algorithm based on its type
 	switch algorithm {
 	case "aes256gcm":
+		logger.Debug("Testing AES-256-GCM algorithm")
 		return testAES256GCM(data, result)
 	case "chacha20poly1305":
+		logger.Debug("Testing ChaCha20-Poly1305 algorithm")
 		return testChaCha20Poly1305(data, result)
 	case "kyber768":
+		logger.Debug("Testing Kyber-768 algorithm")
 		return testKyber(kyber768.Scheme(), data, result)
 	case "kyber1024":
+		logger.Debug("Testing Kyber-1024 algorithm")
 		return testKyber(kyber1024.Scheme(), data, result)
 	case "hybrid-kyber768-aes256gcm":
+		logger.Debug("Testing Hybrid Kyber-768 + AES-256-GCM algorithm")
 		return testHybridKyberAES(kyber768.Scheme(), data, result)
 	default:
+		logger.Error("Unsupported algorithm: %s", algorithm)
 		return nil, fmt.Errorf("unsupported algorithm: %s", algorithm)
 	}
 }
 
 // SetDefaultAlgorithm sets the default encryption algorithm
 func SetDefaultAlgorithm(algorithm string, postQuantum bool) error {
+	logger.Info("Setting default encryption algorithm to %s (post-quantum: %t)", algorithm, postQuantum)
 	// Validate algorithm
 	valid := false
 	if postQuantum {

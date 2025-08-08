@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/vishvananda/netlink"
 )
 
@@ -36,12 +37,17 @@ type AdvertisedNetwork struct {
 
 // ListInterfaces returns a list of network interfaces
 func ListInterfaces() ([]Interface, error) {
+	logger.Debug("Listing network interfaces")
+	
 	// Get all network interfaces
 	links, err := netlink.LinkList()
 	if err != nil {
+		logger.Error("Failed to list interfaces: %v", err)
 		return nil, fmt.Errorf("failed to list interfaces: %v", err)
 	}
 
+	logger.Debug("Found %d network interfaces", len(links))
+	
 	// Convert to Interface objects
 	interfaces := make([]Interface, 0, len(links))
 	for _, link := range links {

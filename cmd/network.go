@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/dzakwan/ipsec-vpn/pkg/network"
 	"github.com/spf13/cobra"
 )
@@ -30,11 +31,14 @@ var networkShowCmd = &cobra.Command{
 		}
 
 		if interfaces {
+			logger.Debug("Displaying network interfaces")
 			fmt.Println("Network Interfaces:")
 			netIfaces, err := network.ListInterfaces()
 			if err != nil {
+				logger.Error("Error listing interfaces: %v", err)
 				fmt.Printf("Error listing interfaces: %v\n", err)
 			} else {
+				logger.Info("Found %d network interfaces", len(netIfaces))
 				for _, iface := range netIfaces {
 					fmt.Printf("- %s: %s\n", iface.Name, iface.Status)
 					fmt.Printf("  MAC: %s\n", iface.MAC)
@@ -46,11 +50,14 @@ var networkShowCmd = &cobra.Command{
 		}
 
 		if routes {
+			logger.Debug("Displaying routing table")
 			fmt.Println("Routing Table:")
 			routes, err := network.ListRoutes()
 			if err != nil {
+				logger.Error("Error listing routes: %v", err)
 				fmt.Printf("Error listing routes: %v\n", err)
 			} else {
+				logger.Info("Found %d routes in routing table", len(routes))
 				for _, route := range routes {
 					fmt.Printf("- Destination: %s\n", route.Destination)
 					fmt.Printf("  Gateway: %s\n", route.Gateway)
@@ -62,11 +69,14 @@ var networkShowCmd = &cobra.Command{
 		}
 
 		if advertised {
+			logger.Debug("Displaying advertised networks")
 			fmt.Println("Advertised Networks:")
 			advNetworks, err := network.ListAdvertisedNetworks()
 			if err != nil {
+				logger.Error("Error listing advertised networks: %v", err)
 				fmt.Printf("Error listing advertised networks: %v\n", err)
 			} else {
+				logger.Info("Found %d advertised networks", len(advNetworks))
 				for _, net := range advNetworks {
 					fmt.Printf("- Network: %s\n", net.CIDR)
 					fmt.Printf("  Advertised via: %s\n", net.AdvertisedVia)
@@ -87,11 +97,14 @@ var networkAdvertiseCmd = &cobra.Command{
 		tunnelName, _ := cmd.Flags().GetString("tunnel")
 		metric, _ := cmd.Flags().GetInt("metric")
 
+		logger.Info("Advertising network %s via tunnel %s with metric %d", networkCIDR, tunnelName, metric)
 		err := network.AdvertiseNetwork(networkCIDR, tunnelName, metric)
 		if err != nil {
+			logger.Error("Error advertising network: %v", err)
 			fmt.Printf("Error advertising network: %v\n", err)
 			return
 		}
+		logger.Info("Network %s advertised successfully", networkCIDR)
 
 		fmt.Printf("Network %s is now being advertised via tunnel %s\n", 
 			networkCIDR, tunnelName)

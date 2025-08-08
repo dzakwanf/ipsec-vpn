@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/dzakwan/ipsec-vpn/pkg/tunnel"
 	"github.com/spf13/cobra"
 )
@@ -39,12 +40,15 @@ var tunnelCreateCmd = &cobra.Command{
 		}
 
 		// Create and start the tunnel
+		logger.Info("Creating tunnel '%s' with local IP %s and remote IP %s", name, localIP, remoteIP)
 		tun, err := tunnel.Create(config)
 		if err != nil {
+			logger.Error("Error creating tunnel: %v", err)
 			fmt.Printf("Error creating tunnel: %v\n", err)
 			return
 		}
 
+		logger.Info("Tunnel '%s' created successfully", tun.Name)
 		fmt.Printf("Tunnel '%s' created successfully\n", tun.Name)
 		fmt.Printf("Local IP: %s, Remote IP: %s\n", tun.LocalIP, tun.RemoteIP)
 		fmt.Printf("Local Subnet: %s, Remote Subnet: %s\n", tun.LocalSubnet, tun.RemoteSubnet)
@@ -59,17 +63,21 @@ var tunnelShowCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			// List all tunnels
+			logger.Debug("Listing all configured tunnels")
 			tunnels, err := tunnel.ListAll()
 			if err != nil {
+				logger.Error("Error listing tunnels: %v", err)
 				fmt.Printf("Error listing tunnels: %v\n", err)
 				return
 			}
 
 			if len(tunnels) == 0 {
+				logger.Info("No tunnels configured")
 				fmt.Println("No tunnels configured")
 				return
 			}
 
+			logger.Info("Found %d configured tunnels", len(tunnels))
 			fmt.Println("Configured tunnels:")
 			for _, t := range tunnels {
 				fmt.Printf("- %s: %s <-> %s (%s)\n", t.Name, t.LocalIP, t.RemoteIP, t.Status)
@@ -77,12 +85,15 @@ var tunnelShowCmd = &cobra.Command{
 		} else {
 			// Show specific tunnel
 			name := args[0]
+			logger.Debug("Retrieving details for tunnel '%s'", name)
 			tun, err := tunnel.Get(name)
 			if err != nil {
+				logger.Error("Error getting tunnel '%s': %v", name, err)
 				fmt.Printf("Error getting tunnel '%s': %v\n", name, err)
 				return
 			}
 
+			logger.Info("Displaying details for tunnel '%s'", tun.Name)
 			fmt.Printf("Tunnel: %s\n", tun.Name)
 			fmt.Printf("Status: %s\n", tun.Status)
 			fmt.Printf("Local IP: %s\n", tun.LocalIP)
@@ -105,12 +116,15 @@ var tunnelDeleteCmd = &cobra.Command{
 		name := args[0]
 		force, _ := cmd.Flags().GetBool("force")
 
+		logger.Info("Deleting tunnel '%s' (force: %t)", name, force)
 		err := tunnel.Delete(name, force)
 		if err != nil {
+			logger.Error("Error deleting tunnel '%s': %v", name, err)
 			fmt.Printf("Error deleting tunnel '%s': %v\n", name, err)
 			return
 		}
 
+		logger.Info("Tunnel '%s' deleted successfully", name)
 		fmt.Printf("Tunnel '%s' deleted successfully\n", name)
 	},
 }
@@ -121,12 +135,15 @@ var tunnelStartCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
+		logger.Info("Starting tunnel '%s'", name)
 		err := tunnel.Start(name)
 		if err != nil {
+			logger.Error("Error starting tunnel '%s': %v", name, err)
 			fmt.Printf("Error starting tunnel '%s': %v\n", name, err)
 			return
 		}
 
+		logger.Info("Tunnel '%s' started successfully", name)
 		fmt.Printf("Tunnel '%s' started successfully\n", name)
 	},
 }
@@ -137,12 +154,15 @@ var tunnelStopCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
+		logger.Info("Stopping tunnel '%s'", name)
 		err := tunnel.Stop(name)
 		if err != nil {
+			logger.Error("Error stopping tunnel '%s': %v", name, err)
 			fmt.Printf("Error stopping tunnel '%s': %v\n", name, err)
 			return
 		}
 
+		logger.Info("Tunnel '%s' stopped successfully", name)
 		fmt.Printf("Tunnel '%s' stopped successfully\n", name)
 	},
 }

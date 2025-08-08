@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
+	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/viper"
 	"github.com/vishvananda/netlink"
 )
@@ -52,13 +53,19 @@ type Tunnel struct {
 func Create(config Config) (*Tunnel, error) {
 	// Validate configuration
 	if err := validateConfig(config); err != nil {
+		logger.Error("Failed to validate tunnel configuration: %v", err)
 		return nil, err
 	}
 
 	// Check if tunnel already exists
 	if _, err := Get(config.Name); err == nil {
+		logger.Error("Tunnel with name '%s' already exists", config.Name)
 		return nil, fmt.Errorf("tunnel with name '%s' already exists", config.Name)
 	}
+
+	logger.Info("Creating new tunnel '%s' from %s to %s", config.Name, config.LocalIP, config.RemoteIP)
+	logger.Debug("Tunnel details: local subnet %s, remote subnet %s, encryption %s, post-quantum %v", 
+		config.LocalSubnet, config.RemoteSubnet, config.Encryption, config.PostQuantum)
 
 	// Create tunnel object
 	tunnel := &Tunnel{
@@ -76,19 +83,24 @@ func Create(config Config) (*Tunnel, error) {
 
 	// Save tunnel configuration
 	if err := saveTunnel(tunnel); err != nil {
+		logger.Error("Failed to save tunnel configuration: %v", err)
 		return nil, err
 	}
 
 	// Create the actual tunnel interface
+	logger.Debug("Creating tunnel interface for '%s'", config.Name)
 	if err := createTunnelInterface(tunnel); err != nil {
 		// Cleanup on failure
+		logger.Error("Failed to create tunnel interface: %v", err)
 		_ = deleteTunnelConfig(config.Name)
 		return nil, err
 	}
 
 	// Start the tunnel
+	logger.Debug("Starting tunnel '%s'", config.Name)
 	if err := startTunnel(tunnel); err != nil {
 		// Cleanup on failure
+		logger.Error("Failed to start tunnel: %v", err)
 		_ = deleteTunnelInterface(tunnel)
 		_ = deleteTunnelConfig(config.Name)
 		return nil, err
@@ -186,18 +198,23 @@ func Start(name string) error {
 // Stop stops an active tunnel
 func Stop(name string) error {
 	// Get tunnel
+	logger.Debug("Attempting to stop tunnel '%s'", name)
 	tunnel, err := Get(name)
 	if err != nil {
+		logger.Error("Failed to get tunnel '%s': %v", name, err)
 		return err
 	}
 
 	// Check if tunnel is already down
 	if tunnel.Status == StatusDown {
+		logger.Info("Tunnel '%s' is already down, no action needed", name)
 		return nil
 	}
 
 	// Stop the tunnel
+	logger.Info("Stopping tunnel '%s'", name)
 	if err := stopTunnel(tunnel); err != nil {
+		logger.Error("Failed to stop tunnel '%s': %v", name, err)
 		return err
 	}
 
@@ -205,9 +222,11 @@ func Stop(name string) error {
 	tunnel.Status = StatusDown
 	tunnel.UpdatedAt = time.Now()
 	if err := saveTunnel(tunnel); err != nil {
+		logger.Error("Failed to update tunnel status: %v", err)
 		return err
 	}
 
+	logger.Info("Tunnel '%s' stopped successfully", name)
 	return nil
 }
 
