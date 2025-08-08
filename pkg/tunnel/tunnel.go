@@ -3,17 +3,13 @@ package tunnel
 import (
 	"errors"
 	"fmt"
-	"hash/fnv"
-	"net"
 	"os"
 	"os/user"
 	"path/filepath"
-	"runtime"
 	"time"
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
 	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/viper"
-	"github.com/vishvananda/netlink"
 )
 
 // Status represents the current state of a tunnel
