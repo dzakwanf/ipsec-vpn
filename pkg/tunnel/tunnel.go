@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
@@ -444,6 +445,13 @@ func createTunnelInterface(tunnel *Tunnel) error {
 	// This is a simplified implementation
 	// In a real implementation, this would use netlink to create the tunnel interface
 	
+	// Check if running on macOS
+	if runtime.GOOS == "darwin" {
+		logger.Info("Tunnel interface creation is not supported on macOS")
+		// For macOS, we'll simulate success for development purposes
+		return nil
+	}
+	
 	// Create IPIP tunnel interface
 	ipip := &netlink.Iptun{
 		LinkAttrs: netlink.LinkAttrs{
@@ -467,6 +475,13 @@ func deleteTunnelInterface(tunnel *Tunnel) error {
 	// This is a simplified implementation
 	// In a real implementation, this would use netlink to delete the tunnel interface
 	
+	// Check if running on macOS
+	if runtime.GOOS == "darwin" {
+		logger.Info("Tunnel interface deletion is not supported on macOS")
+		// For macOS, we'll simulate success for development purposes
+		return nil
+	}
+	
 	// Get the tunnel interface
 	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
 	if err != nil {
@@ -485,6 +500,13 @@ func deleteTunnelInterface(tunnel *Tunnel) error {
 func startTunnel(tunnel *Tunnel) error {
 	// This is a simplified implementation
 	// In a real implementation, this would configure IPsec policies and start the tunnel
+	
+	// Check if running on macOS
+	if runtime.GOOS == "darwin" {
+		logger.Info("Tunnel interface activation is not supported on macOS")
+		// For macOS, we'll simulate success for development purposes
+		return nil
+	}
 	
 	// Get the tunnel interface
 	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
@@ -505,6 +527,13 @@ func stopTunnel(tunnel *Tunnel) error {
 	// This is a simplified implementation
 	// In a real implementation, this would remove IPsec policies and stop the tunnel
 	
+	// Check if running on macOS
+	if runtime.GOOS == "darwin" {
+		logger.Info("Tunnel interface deactivation is not supported on macOS")
+		// For macOS, we'll simulate success for development purposes
+		return nil
+	}
+	
 	// Get the tunnel interface
 	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
 	if err != nil {
@@ -523,6 +552,13 @@ func stopTunnel(tunnel *Tunnel) error {
 func getTunnelStatus(tunnel *Tunnel) (Status, error) {
 	// This is a simplified implementation
 	// In a real implementation, this would check the actual tunnel status
+	
+	// Check if running on macOS
+	if runtime.GOOS == "darwin" {
+		logger.Debug("Tunnel status check is not supported on macOS, returning stored status")
+		// For macOS, we'll return the stored status
+		return tunnel.Status, nil
+	}
 	
 	// Get the tunnel interface
 	link, err := netlink.LinkByName(fmt.Sprintf("ipsec-%s", tunnel.Name))
