@@ -1,0 +1,76 @@
+# IPsec VPN Configuration File
+
+# Global settings
+verbose: false
+config_dir: "~/.ipsec-vpn"
+
+# Crypto settings
+crypto:
+  default_classic: aes256gcm
+  default_post_quantum: kyber768
+
+# Tunnel defaults
+tunnel_defaults:
+  encryption: aes256gcm
+  post_quantum: false
+  mtu: 1400
+  key_rotation_interval: 86400  # 24 hours in seconds
+
+# Pre-configured tunnels
+tunnels:
+  office:
+    local_ip: 192.168.1.1
+    remote_ip: 10.0.0.1
+    local_subnet: 192.168.0.0/24
+    remote_subnet: 10.0.0.0/24
+    encryption: chacha20poly1305
+    post_quantum: false
+    description: "Office VPN connection"
+  
+  datacenter:
+    local_ip: 192.168.1.1
+    remote_ip: 172.16.0.1
+    local_subnet: 192.168.0.0/24
+    remote_subnet: 172.16.0.0/16
+    encryption: kyber768
+    post_quantum: true
+    description: "Datacenter connection with post-quantum security"
+
+# Network advertisement settings
+network_advertisement:
+  enabled: true
+  advertised_networks:
+    - cidr: 192.168.10.0/24
+      tunnel: office
+      metric: 100
+    - cidr: 192.168.20.0/24
+      tunnel: datacenter
+      metric: 200
+
+# Logging configuration
+logging:
+  level: info  # debug, info, warn, error
+  file: "/var/log/ipsec-vpn.log"
+  max_size: 10  # MB
+  max_backups: 3
+  max_age: 28  # days
+
+# Security settings
+security:
+  perfect_forward_secrecy: true
+  key_rotation_enabled: true
+  replay_protection: true
+  authentication_method: psk  # pre-shared key
+  psk_file: "~/.ipsec-vpn/psk.key"
+
+# Advanced settings
+advanced:
+  ike_version: 2  # IKEv2
+  esp_proposals:
+    - aes256gcm-sha256
+    - chacha20poly1305-sha256
+  ike_proposals:
+    - aes256gcm-sha384-ecp384
+    - chacha20poly1305-sha384-ecp384
+  dpd_delay: 30  # seconds
+  dpd_timeout: 120  # seconds
