@@ -455,14 +455,31 @@ func deleteTunnelConfig(name string) error {
 func createTunnelInterface(tunnel *Tunnel) error {
 	// This is a simplified implementation
 	// In a real implementation, this would use netlink to create the tunnel interface
-	
+
 	// Check if running on macOS
 	if runtime.GOOS == "darwin" {
 		logger.Info("Tunnel interface creation is not supported on macOS")
 		// For macOS, we'll simulate success for development purposes
 		return nil
 	}
-	
+
+	// Check for root privileges
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("must run as root to create tunnel interfaces")
+	}
+
+	// Check if ip_vti kernel module is loaded
+	if _, err := os.Stat("/proc/net/vti"); os.IsNotExist(err) {
+		return fmt.Errorf("ip_vti kernel module not loaded. Run 'sudo modprobe ip_vti'")
+	}
+
+	// Validate IP addresses
+	localIP := net.ParseIP(tunnel.LocalIP)
+	remoteIP := net.ParseIP(tunnel.RemoteIP)
+	if localIP == nil || remoteIP == nil {
+		return fmt.Errorf("invalid LocalIP or RemoteIP for tunnel: %s, %s", tunnel.LocalIP, tunnel.RemoteIP)
+	}
+
 	// Create VTI tunnel interface
 	attrs := netlink.NewLinkAttrs()
 	attrs.Name = fmt.Sprintf("ipsec-%s", tunnel.Name)
@@ -476,8 +493,8 @@ func createTunnelInterface(tunnel *Tunnel) error {
 		LinkAttrs: attrs,
 		IKey:      key,
 		OKey:      key,
-		Local:     net.ParseIP(tunnel.LocalIP),
-		Remote:    net.ParseIP(tunnel.RemoteIP),
+		Local:     localIP,
+		Remote:    remoteIP,
 	}
 
 	// Add the tunnel interface
