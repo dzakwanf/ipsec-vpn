@@ -322,9 +322,20 @@ func getConfigDir() (string, error) {
 	}
 
 	// Use default config directory
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	home := ""
+	// Check if running with sudo
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser != "" {
+		u, err := user.Lookup(sudoUser)
+		if err != nil {
+			return "", err
+		}
+		home = u.HomeDir
+	} else {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
 	}
 
 	configDir = filepath.Join(home, ".ipsec-vpn")
