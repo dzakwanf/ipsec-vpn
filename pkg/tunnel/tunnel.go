@@ -456,10 +456,15 @@ func createTunnelInterface(tunnel *Tunnel) error {
 	attrs := netlink.NewLinkAttrs()
 	attrs.Name = fmt.Sprintf("ipsec-%s", tunnel.Name)
 
+	// Generate a unique key for the tunnel based on its name
+	h := fnv.New32a()
+	h.Write([]byte(tunnel.Name))
+	key := h.Sum32()
+
 	vti := &netlink.Vti{
 		LinkAttrs: attrs,
-		IKey:      1234,
-		OKey:      1234,
+		IKey:      key,
+		OKey:      key,
 		Local:     net.ParseIP(tunnel.LocalIP),
 		Remote:    net.ParseIP(tunnel.RemoteIP),
 	}
