@@ -452,18 +452,20 @@ func createTunnelInterface(tunnel *Tunnel) error {
 		return nil
 	}
 	
-	// Create IPIP tunnel interface
-	ipip := &netlink.Iptun{
-		LinkAttrs: netlink.LinkAttrs{
-			Name: fmt.Sprintf("ipsec-%s", tunnel.Name),
-		},
-		Local:  net.ParseIP(tunnel.LocalIP),
-		Remote: net.ParseIP(tunnel.RemoteIP),
-		Ttl:    255,
+	// Create VTI tunnel interface
+	attrs := netlink.NewLinkAttrs()
+	attrs.Name = fmt.Sprintf("ipsec-%s", tunnel.Name)
+
+	vti := &netlink.Vti{
+		LinkAttrs: attrs,
+		IKey:      1234,
+		OKey:      1234,
+		Local:     net.ParseIP(tunnel.LocalIP),
+		Remote:    net.ParseIP(tunnel.RemoteIP),
 	}
 
 	// Add the tunnel interface
-	if err := netlink.LinkAdd(ipip); err != nil {
+	if err := netlink.LinkAdd(vti); err != nil {
 		return fmt.Errorf("failed to create tunnel interface: %v", err)
 	}
 
