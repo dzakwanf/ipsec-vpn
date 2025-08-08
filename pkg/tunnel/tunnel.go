@@ -33,7 +33,6 @@ type Config struct {
 	RemoteSubnet string
 	Encryption   string
 	PostQuantum  bool
-}
 
 // Tunnel represents an IPsec tunnel
 type Tunnel struct {
@@ -47,7 +46,6 @@ type Tunnel struct {
 	Status       Status    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
-}
 
 // Create creates a new IPsec tunnel with the given configuration
 func Create(config Config) (*Tunnel, error) {
