@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
-
 	"github.com/dzakwan/ipsec-vpn/pkg/crypto"
 	"github.com/dzakwan/ipsec-vpn/pkg/logger"
 	"github.com/spf13/viper"
